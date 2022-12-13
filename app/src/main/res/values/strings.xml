@@ -1,0 +1,10 @@
+<resources>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="wifi_required_data">Wifi Required Data</string>
+    <string name="name">Name:</string>
+    <string name="submit">Submit</string>
+    <string name="device_id">Device Id</string>
+    <string name="mqtt_adr">Mqtt Adr</string>
+    <string name="app_name">Plunge Firmware Demo</string>
+    <string name="wi_fi">Wi-fi</string>
+</resources>

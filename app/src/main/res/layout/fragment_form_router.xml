@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".fragment.FormRouterFragment">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="50dp"
+        android:text="@string/wifi_required_data"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <TextView
+        android:id="@+id/tvName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ssid"
+        android:textSize="16sp"
+        android:layout_marginTop="30dp"
+        android:paddingVertical="5dp"
+        android:layout_marginStart="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle" />
+
+    <EditText
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:paddingVertical="5dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@android:color/darker_gray"
+        app:layout_constraintStart_toEndOf="@id/tvName"
+        app:layout_constraintTop_toTopOf="@id/tvName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/tvName"/>
+
+
+
+
+
+    <TextView
+        android:id="@+id/tvSsid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="pass"
+        android:textSize="16sp"
+        android:layout_marginTop="30dp"
+        android:paddingVertical="5dp"
+        android:layout_marginStart="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvName" />
+
+    <EditText
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:paddingVertical="5dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@android:color/darker_gray"
+        app:layout_constraintStart_toEndOf="@id/tvSsid"
+        app:layout_constraintTop_toTopOf="@id/tvSsid"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/tvSsid"/>
+
+
+
+    <TextView
+        android:id="@+id/tvReq"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/device_id"
+        android:textSize="16sp"
+        android:layout_marginTop="30dp"
+        android:paddingVertical="5dp"
+        android:layout_marginStart="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvSsid" />
+
+    <EditText
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:paddingVertical="5dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@android:color/darker_gray"
+        app:layout_constraintStart_toEndOf="@id/tvReq"
+        app:layout_constraintTop_toTopOf="@id/tvReq"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/tvReq"/>
+
+    <TextView
+        android:id="@+id/tvMqtt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/mqtt_adr"
+        android:textSize="16sp"
+        android:layout_marginTop="30dp"
+        android:paddingVertical="5dp"
+        android:layout_marginStart="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvReq" />
+
+    <EditText
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:paddingVertical="5dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@android:color/darker_gray"
+        app:layout_constraintStart_toEndOf="@id/tvMqtt"
+        app:layout_constraintTop_toTopOf="@id/tvMqtt"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/tvMqtt"/>
+
+    <Button
+        android:id="@+id/submit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvMqtt"
+        android:layout_marginTop="50dp"
+        android:text="@string/submit"/>
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
