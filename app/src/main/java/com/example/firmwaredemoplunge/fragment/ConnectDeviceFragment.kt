@@ -2,16 +2,22 @@ package com.example.firmwaredemoplunge.fragment
 
 
 import android.app.Dialog
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Context.WIFI_SERVICE
+import android.content.Intent
+import android.content.IntentFilter
+import android.net.ConnectivityManager
+import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.os.Environment
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
+import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -26,7 +32,9 @@ import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.*
+
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -45,11 +53,28 @@ class ConnectDeviceFragment : Fragment() {
     private var param1: String? = null
     private var param2: String? = null
 
+    private var deviceName = ""
+    var isWifiEnabled: Boolean? = false
+    private val mqttAddress = "a1k3wmadt0ja18-ats.iot.us-east-1.amazonaws.com"
     val routerApi = RetrofitHelper.getInstance("http://192.168.1.1").create(RouterApi::class.java)
-    val createThingApi =
+    private val createThingApi =
         RetrofitHelper.getInstance("https://zvy5ofzzch.execute-api.us-east-1.amazonaws.com/default/")
             .create(RouterApi::class.java)
 
+    val intentFilter = IntentFilter()
+
+    val wificonn = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent) {
+            val action = intent.action
+            if (action == WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION) {
+                if (intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false)) {
+
+                } else {
+
+                }
+            }
+        }
+    }
     private lateinit var wifiAdapter: WifiListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,56 +90,172 @@ class ConnectDeviceFragment : Fragment() {
         savedInstanceState: Bundle?,
     ): View? {
         // Inflate the layout for this fragment
+        intentFilter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)
+        requireContext().registerReceiver(wificonn, intentFilter)
         return inflater.inflate(R.layout.fragment_connect_device, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        createThingApiResponse()
 
-        view.findViewById<ImageView>(R.id.ivAddDevice).setOnClickListener {
-            getWifiListResponse()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        wifiAction()
+
+
+
+        getView()?.findViewById<ImageView>(R.id.ivAddDevice)?.setOnClickListener {
+            /*createThingApiResponse(deviceName)*/
+            connectToPlungeDialog(false)
+
         }
 
     }
 
-    private fun createThingApiResponse() {
+    override fun onPause() {
+        super.onPause()
+//        requireContext().unregisterReceiver(wificonn)
+
+    }
+
+    private fun wifiAction() {
+        val wifiManager =
+            requireContext().applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
+        if (wifiManager.isWifiEnabled) {
+            val wifiInfo = wifiManager.connectionInfo
+            val ssid = wifiInfo.ssid.replace("\"", "")
+            Log.e("deviceSSID", ssid)
+            if (ssid.contains("Cold_Plunge_")) {
+                deviceName = ssid
+                Log.e("deviceWifi", deviceName.trim())
+            } else {
+                Log.e("in else condition", "djajshdfjsdhfcjk")
+//                return
+            }
+            connectToInternet()
+            if (!ssid.contains("Cold_Plunge_")) {
+                Log.e("deviceWifixyz", deviceName)
+                createThingApiResponse(deviceName.trim())
+            }
+
+        } else {
+
+        }
+
+    }
+
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager =
+            requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager?
+        val activeNetworkInfo = connectivityManager?.activeNetworkInfo
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected
+    }
+
+    private fun connectToInternet() {
+        val dialog = Dialog(requireContext())
+        dialog.setCancelable(false)
+        dialog.setContentView(R.layout.connect_to_internet_dialog)
+        dialog.findViewById<Button>(R.id.btnOk).setOnClickListener {
+            /*val edit = dialog.findViewById(R.id.etDeviceName) as EditText
+            val text = edit.text.trim().toString()
+
+            dialog.dismiss()
+            val name = "Cold_Plunge_$text"*/
+//            deviceName = name
+            startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
+            dialog.dismiss()
+        }
+        dialog.show()
+        val window: Window? = dialog.window
+        window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+    }
+
+
+    private fun createThingApiResponse(device: String) {
         lifecycleScope.launch {
-            val result = createThingApi.createThing("TA_001_1234591")
+            val result = createThingApi.createThing(device)
+            if (result.isSuccessful) {
+                val response = result.body()
 
+                val certificatePem = response?.certificatePem
+                val certificateKey = response?.privateKey
 
-            val response = result.body()
-            val certificatePem = response?.certificatePem
-            val certificateKey = response?.privateKey
+                val clientCert =
+                    File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                        "/2fbee0846ae15022e0b5d25be29f9563de1b1ac8ca1c7eb0e7aa8ce97c8e25be-certificate.crt")
+                clientCert.writeText(certificatePem!!)
 
-            val downloadFolder =
-                requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                val clientKey =
+                    File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                        "/private.key")
+                clientKey.writeText(certificateKey!!)
 
+                connectToPlungeDialog(true)
+            } else {
+                val message = result.errorBody()
+                Log.e("error message", Gson().toJson(message))
+                Log.e("error message", Gson().toJson(result.message()))
 
-            val clientCert =
-                File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    "/2fbee0846ae15022e0b5d25be29f9563de1b1ac8ca1c7eb0e7aa8ce97c8e25be-certificate.crt")
-
-            clientCert.writeText(certificatePem!!)
-
-
-            val clientKey =
-                File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    "/private.key")
-            clientKey.writeText(certificateKey!!)
+            }
 
         }
     }
 
+    private fun addDeviceDialog() {
+        val dialog = Dialog(requireContext())
+        dialog.setContentView(R.layout.dialog_add_device)
+        dialog.findViewById<Button>(R.id.submit).setOnClickListener {
+            val edit = dialog.findViewById(R.id.etDeviceName) as EditText
+            val text = edit.text.trim().toString()
+
+            dialog.dismiss()
+            val name = "Cold_Plunge_$text"
+//            deviceName = name
+            createThingApiResponse(deviceName)
+        }
+        dialog.show()
+        val window: Window? = dialog.window
+        window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+    }
+
+    private fun connectToPlungeDialog(isShowingDevice: Boolean) {
+        val dialog = Dialog(requireContext())
+        dialog.setContentView(R.layout.dialog_connect_plunge)
+        dialog.setCancelable(false)
+
+        dialog.findViewById<Button>(R.id.btnOk).setOnClickListener {
+            startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
+            dialog.dismiss()
+        }
+
+        if (!isShowingDevice) {
+            dialog.findViewById<Button>(R.id.btnShowDevices).visibility = View.GONE
+            dialog.findViewById<TextView>(R.id.tvHeadingNo).visibility = View.VISIBLE
+            dialog.findViewById<TextView>(R.id.tvHeading).visibility = View.GONE
+        }
+
+        dialog.findViewById<Button>(R.id.btnShowDevices).setOnClickListener {
+            getWifiListResponse()
+            dialog.dismiss()
+        }
+
+        dialog.show()
+        val window: Window? = dialog.window
+        window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+    }
 
     private fun getWifiListResponse() {
         lifecycleScope.launch {
             val result = routerApi.getWifiList()
 
-            if (result != null) {
+            if (result.isSuccessful) {
                 val list = result.body() as ArrayList<WfiNameList.WfiNameListItem>
                 wifiListDialog(list)
+            } else {
+                Toast.makeText(requireContext(), result.message(), Toast.LENGTH_LONG).show()
             }
         }
 
@@ -145,10 +286,10 @@ class ConnectDeviceFragment : Fragment() {
         dialog.findViewById<EditText>(R.id.etSsid).setText(ssid)
 
         dialog.findViewById<Button>(R.id.submit).setOnClickListener {
-            val result = request(dialog.findViewById<EditText>(R.id.etSsid).text.toString(),
+            request(dialog.findViewById<EditText>(R.id.etSsid).text.toString(),
                 dialog.findViewById<EditText>(R.id.etPass).text.toString(),
-                "plunge_demo",
-                "a1k3wmadt0ja18-ats.iot.us-east-1.amazonaws.com")
+                deviceName,
+                mqttAddress)
         }
 
         dialog.show()
@@ -196,9 +337,13 @@ class ConnectDeviceFragment : Fragment() {
         Log.d("requestBody", Gson().toJson(requestBody))
 
         lifecycleScope.launch {
-            routerApi.getRouterResponse(
+            val result = routerApi.getRouterResponse(
                 requestBody
             )
+
+            if (!result.isSuccessful) {
+                Toast.makeText(requireContext(), result.message(), Toast.LENGTH_LONG).show()
+            }
 
 
         }
@@ -244,7 +389,7 @@ class ConnectDeviceFragment : Fragment() {
 
             return MultipartBody.Part.createFormData("file",
                 file?.name,
-                RequestBody.create("image/*".toMediaTypeOrNull(), file!!))
+                file!!.asRequestBody("image/*".toMediaTypeOrNull()))
 
         } catch (ex: Exception) {
             ex.printStackTrace()

@@ -7,4 +7,8 @@
     <string name="mqtt_adr">Mqtt Adr</string>
     <string name="app_name">Plunge Firmware Demo</string>
     <string name="wi_fi">Wi-fi</string>
+    <string name="add_device">Add Device</string>
+    <string name="plunge">Plunge</string>
+    <string name="connect_to_ncold_plunge_device_nturn_off_mobile_data">Connect to \nCold Plunge Device,\nTurn off mobile data</string>
+    <string name="connect_to_ncold_plunge_device">Connect to \nCold Plunge Device</string>
 </resources>
