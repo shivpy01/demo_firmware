@@ -49,6 +49,8 @@ private const val ARG_PARAM2 = "param2"
 
 
 class ConnectDeviceFragment : Fragment() {
+    private var isConnectingWithPlungeAgain = false
+
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
@@ -128,21 +130,28 @@ class ConnectDeviceFragment : Fragment() {
             val wifiInfo = wifiManager.connectionInfo
             val ssid = wifiInfo.ssid.replace("\"", "")
             Log.e("deviceSSID", ssid)
+            if (ssid == "<unknown ssid>") {
+                Log.e("in else condition", "djajshdfjsdhfcjk")
+                return
+            }
             if (ssid.contains("Cold_Plunge_")) {
                 deviceName = ssid
                 Log.e("deviceWifi", deviceName.trim())
+
+                Log.e("TAG", "wifiAction: $isConnectingWithPlungeAgain")
+                if (isConnectingWithPlungeAgain == true) {
+                    getWifiListResponse()
+                } else {
+                    connectToInternet()
+                }
+
             } else {
-                Log.e("in else condition", "djajshdfjsdhfcjk")
-//                return
-            }
-            connectToInternet()
-            if (!ssid.contains("Cold_Plunge_")) {
                 Log.e("deviceWifixyz", deviceName)
                 createThingApiResponse(deviceName.trim())
             }
 
         } else {
-
+//            connectToPlungeDialog(true)
         }
 
     }
@@ -229,6 +238,9 @@ class ConnectDeviceFragment : Fragment() {
         dialog.findViewById<Button>(R.id.btnOk).setOnClickListener {
             startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
             dialog.dismiss()
+            if (isShowingDevice == true) {
+                isConnectingWithPlungeAgain = true
+            }
         }
 
         if (!isShowingDevice) {
@@ -290,6 +302,7 @@ class ConnectDeviceFragment : Fragment() {
                 dialog.findViewById<EditText>(R.id.etPass).text.toString(),
                 deviceName,
                 mqttAddress)
+            dialog.dismiss()
         }
 
         dialog.show()
@@ -341,11 +354,13 @@ class ConnectDeviceFragment : Fragment() {
                 requestBody
             )
 
-            if (!result.isSuccessful) {
+            if (result.isSuccessful) {
+                val bundle = Bundle()
+                bundle.putString("SSID", deviceName)
+                DeviceDetailFragment().arguments = bundle
+                navigate(DeviceDetailFragment())
+            } else
                 Toast.makeText(requireContext(), result.message(), Toast.LENGTH_LONG).show()
-            }
-
-
         }
     }
 
@@ -399,6 +414,11 @@ class ConnectDeviceFragment : Fragment() {
                 fos.close()
             }
         }
+    }
+
+    private fun navigate(frm: Fragment) {
+        activity?.supportFragmentManager?.beginTransaction()?.replace(R.id.fl_container, frm)
+            ?.commit()
     }
 
     companion object {

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="56dp"
+    tools:context=".fragment.DeviceDetailFragment">
+
+    <TextView
+        android:id="@+id/tvDeviceName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:text="Device Name"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/ivOffline"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="20dp"
+        android:src="@drawable/red"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/tvDeviceName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvDeviceName" />
+
+
+    <ImageView
+        android:id="@+id/ivOnline"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="20dp"
+        android:src="@drawable/green"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@id/tvDeviceName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvDeviceName" />
+
+    <TextView
+        android:id="@+id/tvStartPump"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        app:layout_constraintStart_toStartOf="@id/tvDeviceName"
+        app:layout_constraintTop_toBottomOf="@id/tvDeviceName"
+        android:text="Pump"
+        android:textSize="20sp"/>
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/sbPump"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="20sp"
+        app:layout_constraintHorizontal_bias="1"
+        android:layout_marginEnd="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/tvStartPump"
+        app:layout_constraintStart_toEndOf="@id/tvStartPump"
+        app:layout_constraintTop_toTopOf="@id/tvStartPump" />
+
+    <TextView
+        android:id="@+id/tvLight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        app:layout_constraintStart_toStartOf="@id/tvDeviceName"
+        app:layout_constraintTop_toBottomOf="@id/tvStartPump"
+        android:text="Light"
+        android:textSize="20sp"/>
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/sbLight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="20sp"
+        app:layout_constraintHorizontal_bias="1"
+        android:layout_marginEnd="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/tvLight"
+        app:layout_constraintStart_toEndOf="@id/tvLight"
+        app:layout_constraintTop_toTopOf="@id/tvLight" />
+
+
+    <TextView
+        android:id="@+id/tvPump"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="@id/tvDeviceName"
+        app:layout_constraintTop_toBottomOf="@id/tvLight"
+        android:layout_marginTop="50dp"
+        android:text="Pump"
+        android:textSize="20sp"/>
+
+    <SeekBar
+        android:id="@+id/seekPump"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:max="100"
+        android:min="50"
+        android:paddingEnd="0dp"
+        app:layout_constraintEnd_toEndOf="@id/sbLight"
+        app:layout_constraintStart_toEndOf="@id/tvPump"
+        app:layout_constraintTop_toTopOf="@id/tvPump"
+        app:layout_constraintBottom_toBottomOf="@id/tvPump"/>
+
+
+
+
+
+
+    <TextView
+        android:id="@+id/tvTemp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="@id/tvDeviceName"
+        app:layout_constraintTop_toBottomOf="@id/tvPump"
+        android:layout_marginTop="50dp"
+        android:text="Temperature"
+        android:textSize="20sp"/>
+
+    <SeekBar
+        android:id="@+id/seekTemp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:max="34"
+        android:min="104"
+        android:paddingEnd="0dp"
+        app:layout_constraintEnd_toEndOf="@id/sbLight"
+        app:layout_constraintStart_toEndOf="@id/tvTemp"
+        app:layout_constraintTop_toTopOf="@id/tvTemp"
+        app:layout_constraintBottom_toBottomOf="@id/tvTemp"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

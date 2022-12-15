@@ -30,7 +30,6 @@ class WifiListAdapter(
         list.sortBy { it.wifi_rssi }
 
         holder.name.text = list[position].wifi_name
-        holder
 
         holder.itemView.setOnClickListener {
             listener.wifiItemClick(list[position].wifi_name)

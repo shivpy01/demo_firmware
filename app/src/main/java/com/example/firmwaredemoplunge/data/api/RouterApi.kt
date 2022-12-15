@@ -21,6 +21,13 @@ interface RouterApi {
     ): Response<CommonResponse>
 
 
+    @POST("test_pub_sub")
+    suspend fun getPlungeDetailResponse(
+        @Query("device_name") deviceName: String,
+        @Body json: String,
+    ): Response<CommonResponse>
+
+
     @GET("/wifi_list")
     suspend fun getWifiList(): Response<WfiNameList>
 }
