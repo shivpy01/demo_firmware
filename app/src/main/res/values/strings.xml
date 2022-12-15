@@ -13,4 +13,5 @@
     <string name="connect_to_ncold_plunge_device">Connect to \nCold Plunge Device</string>
     <string name="temperature">Temperature</string>
     <string name="mode">Mode</string>
+    <string name="something_went_wrong">Oops! Somethings went wrong</string>
 </resources>

@@ -350,17 +350,23 @@ class ConnectDeviceFragment : Fragment() {
         Log.d("requestBody", Gson().toJson(requestBody))
 
         lifecycleScope.launch {
-            val result = routerApi.getRouterResponse(
-                requestBody
-            )
 
-            if (result.isSuccessful) {
-                val bundle = Bundle()
-                bundle.putString("SSID", deviceName)
-                DeviceDetailFragment().arguments = bundle
-                navigate(DeviceDetailFragment())
-            } else
-                Toast.makeText(requireContext(), result.message(), Toast.LENGTH_LONG).show()
+            try {
+                val result = routerApi.getRouterResponse(
+                    requestBody
+                )
+                if (result.isSuccessful) {
+                    val bundle = Bundle()
+                    bundle.putString("SSID", deviceName)
+                    /*val fragment = DeviceDetailFragment()
+                fragment.arguments = bundle*/
+                    navigate(DeviceDetailFragment.newInstance(bundle))
+                } else {
+                    Toast.makeText(requireContext(), result.message(), Toast.LENGTH_LONG).show()
+                }
+            }catch (e : Exception){
+                e.printStackTrace()
+            }
         }
     }
 

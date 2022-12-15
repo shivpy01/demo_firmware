@@ -1,13 +1,13 @@
 package com.example.firmwaredemoplunge.data.api
 
-import com.example.firmwaredemoplunge.data.model.CommonResponse
-import com.example.firmwaredemoplunge.data.model.CreateThingResponse
-import com.example.firmwaredemoplunge.data.model.WfiNameList
+import com.example.firmwaredemoplunge.data.model.*
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.Field
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface RouterApi {
@@ -23,8 +23,17 @@ interface RouterApi {
 
     @POST("test_pub_sub")
     suspend fun getPlungeDetailResponse(
-        @Query("device_name") deviceName: String,
-        @Body json: String,
+        @Body json: PumpDetailModal,
+    ): Response<CommonResponse>
+
+    @POST("test_pub_sub")
+    suspend fun getPlungeLightDetailResponse(
+        @Body json: PlungeLightModel,
+    ): Response<CommonResponse>
+
+    @POST("test_pub_sub")
+    suspend fun getPlungeTempDetailResponse(
+        @Body json: TemperartureDetailModel,
     ): Response<CommonResponse>
 
 
