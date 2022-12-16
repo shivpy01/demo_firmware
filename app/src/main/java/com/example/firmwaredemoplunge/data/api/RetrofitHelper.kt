@@ -16,6 +16,7 @@ object RetrofitHelper {
             it.addInterceptor(logging)
             it.readTimeout(5,TimeUnit.MINUTES)
             it.connectTimeout(5, TimeUnit.MINUTES)
+            it.retryOnConnectionFailure(true)
         }.build()
 
         return Retrofit.Builder()

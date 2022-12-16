@@ -27,6 +27,11 @@ interface RouterApi {
     ): Response<CommonResponse>
 
     @POST("test_pub_sub")
+    suspend fun getPlungeDetailResponse(
+        @Body json: PumpSpeedDetailModal,
+    ): Response<CommonResponse>
+
+    @POST("test_pub_sub")
     suspend fun getPlungeLightDetailResponse(
         @Body json: PlungeLightModel,
     ): Response<CommonResponse>

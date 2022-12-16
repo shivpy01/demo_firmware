@@ -27,6 +27,7 @@ import com.example.firmwaredemoplunge.data.adapter.WifiListAdapter
 import com.example.firmwaredemoplunge.data.api.RetrofitHelper
 import com.example.firmwaredemoplunge.data.api.RouterApi
 import com.example.firmwaredemoplunge.data.model.WfiNameList
+import com.example.firmwaredemoplunge.data.util.PrefManager
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -100,20 +101,49 @@ class ConnectDeviceFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val prefManager = PrefManager(requireContext())
+        val addedDevice = prefManager.getAddedDevice()
+
+        if(!addedDevice.isNullOrEmpty()) {
+
+            view.findViewById<TextView>(R.id.tv_ConnectedDeviceName).text = addedDevice
+
+            view.findViewById<TextView>(R.id.tv_ConnectedDeviceName)
+                .setOnClickListener{
+                    val bundle = Bundle()
+                    bundle.putString("SSID", addedDevice)
+                    navigate(DeviceDetailFragment.newInstance(bundle))
+                }
+
+            view.findViewById<Button>(R.id.bt_RemoveConnectedDevice)
+                .setOnClickListener{
+                    prefManager.clearAllData()
+
+                    view.findViewById<TextView>(R.id.tv_ConnectedDeviceName)
+                        .visibility = View.GONE
+                    it.visibility = View.GONE
+                }
+
+        }else{
+            view.findViewById<TextView>(R.id.tv_ConnectedDeviceName)
+                .visibility = View.GONE
+
+            view.findViewById<Button>(R.id.bt_RemoveConnectedDevice).visibility =
+                View.GONE
+
+
+        }
+
+        getView()?.findViewById<ImageView>(R.id.ivAddDevice)?.setOnClickListener {
+            wifiAction()
+        }
 
     }
 
+
+
     override fun onResume() {
         super.onResume()
-        wifiAction()
-
-
-
-        getView()?.findViewById<ImageView>(R.id.ivAddDevice)?.setOnClickListener {
-            /*createThingApiResponse(deviceName)*/
-            connectToPlungeDialog(false)
-
-        }
 
     }
 
@@ -151,7 +181,7 @@ class ConnectDeviceFragment : Fragment() {
             }
 
         } else {
-//            connectToPlungeDialog(true)
+            connectToPlungeDialog(false)
         }
 
     }
@@ -356,11 +386,17 @@ class ConnectDeviceFragment : Fragment() {
                     requestBody
                 )
                 if (result.isSuccessful) {
+
+                    val prefManager = PrefManager(requireContext())
+                    prefManager.saveAddedDevice(deviceName)
+
                     val bundle = Bundle()
                     bundle.putString("SSID", deviceName)
                     /*val fragment = DeviceDetailFragment()
-                fragment.arguments = bundle*/
+                      fragment.arguments = bundle*/
                     navigate(DeviceDetailFragment.newInstance(bundle))
+
+
                 } else {
                     Toast.makeText(requireContext(), result.message(), Toast.LENGTH_LONG).show()
                 }
@@ -423,7 +459,10 @@ class ConnectDeviceFragment : Fragment() {
     }
 
     private fun navigate(frm: Fragment) {
-        activity?.supportFragmentManager?.beginTransaction()?.replace(R.id.fl_container, frm)
+        activity?.supportFragmentManager
+        ?.beginTransaction()
+            ?.replace(R.id.fl_container, frm)
+            ?.addToBackStack("DeviceDetailFragment")
             ?.commit()
     }
 

@@ -95,7 +95,7 @@
         app:layout_constraintStart_toStartOf="@id/tvDeviceName"
         app:layout_constraintTop_toBottomOf="@id/tvLight"
         android:layout_marginTop="50dp"
-        android:text="Pump"
+        android:text="Pump Speed"
         android:textSize="20sp"/>
 
     <SeekBar
@@ -110,10 +110,6 @@
         app:layout_constraintStart_toEndOf="@id/tvPump"
         app:layout_constraintTop_toTopOf="@id/tvPump"
         app:layout_constraintBottom_toBottomOf="@id/tvPump"/>
-
-
-
-
 
 
     <TextView
@@ -131,8 +127,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
-        android:max="34"
-        android:min="104"
+        android:max="104"
+        android:min="34"
         android:paddingEnd="0dp"
         app:layout_constraintEnd_toEndOf="@id/sbLight"
         app:layout_constraintStart_toEndOf="@id/tvTemp"

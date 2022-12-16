@@ -15,9 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.firmwaredemoplunge.R
 import com.example.firmwaredemoplunge.data.api.RetrofitHelper
 import com.example.firmwaredemoplunge.data.api.RouterApi
-import com.example.firmwaredemoplunge.data.model.PlungeLightModel
-import com.example.firmwaredemoplunge.data.model.PumpDetailModal
-import com.example.firmwaredemoplunge.data.model.TemperartureDetailModel
+import com.example.firmwaredemoplunge.data.model.*
 import com.example.firmwaredemoplunge.data.util.CommonUtil
 import com.example.firmwaredemoplunge.data.util.DialogUtil
 import kotlinx.coroutines.launch
@@ -69,7 +67,7 @@ class DeviceDetailFragment : Fragment() {
                 if (isChecked) {
 
                     if (CommonUtil.isNetworkAvailable(requireContext())) {
-                        getLightResponse(plungeLight(1))
+                        getLightResponse(plungeLight(device!!,1))
                     } else {
                         Toast.makeText(requireContext(), "No Internet", Toast.LENGTH_SHORT).show()
                     }
@@ -77,7 +75,7 @@ class DeviceDetailFragment : Fragment() {
                 } else {
 
                     if (CommonUtil.isNetworkAvailable(requireContext())) {
-                        getLightResponse(plungeLight(0))
+                        getLightResponse(plungeLight(device!!,0))
                     } else {
                         Toast.makeText(requireContext(), "No Internet", Toast.LENGTH_SHORT).show()
 
@@ -89,14 +87,14 @@ class DeviceDetailFragment : Fragment() {
             .setOnCheckedChangeListener { buttonView, isChecked ->
                 if (isChecked) {
                     if (CommonUtil.isNetworkAvailable(requireContext())) {
-                        getResponse(plungePump(device!!, 1, 50))
+                        getResponse(plungePump(device!!, 1))
                     } else {
                         Toast.makeText(requireContext(), "No Internet", Toast.LENGTH_SHORT).show()
                     }
 
                 } else {
                     if (CommonUtil.isNetworkAvailable(requireContext())) {
-                        getResponse(plungePump(device!!, 0, 50))
+                        getResponse(plungePump(device!!, 0))
                     } else {
                         Toast.makeText(requireContext(), "No Internet", Toast.LENGTH_SHORT).show()
                     }
@@ -125,10 +123,10 @@ class DeviceDetailFragment : Fragment() {
                         value = seekBar.progress
                     }
 
-
+                    view.findViewById<TextView>(R.id.tvPump).text = "Pump Speed ( $value )"
 
                     if (CommonUtil.isNetworkAvailable(requireContext())) {
-                        getResponse(plungePump(device!!, 1, value))
+                        getResponseSpeed(plungePumpSpeed(device!!, value))
                     } else {
                         Toast.makeText(requireContext(), "No Internet", Toast.LENGTH_SHORT).show()
                     }
@@ -158,8 +156,11 @@ class DeviceDetailFragment : Fragment() {
                     } else {
                         value = seekBar.progress
                     }
+
+                    view.findViewById<TextView>(R.id.tvTemp).text = "Temperature ( $value )"
+
                     if (CommonUtil.isNetworkAvailable(requireContext())) {
-                        getTempResponse(plungeTemp(value))
+                        getTempResponse(plungeTemp(device!!,value))
                     } else {
                         Toast.makeText(requireContext(), "No Internet", Toast.LENGTH_SHORT).show()
                     }
@@ -180,17 +181,16 @@ class DeviceDetailFragment : Fragment() {
                     device?.let {
                         detailApi.getPlungeDetailResponse(model as PumpDetailModal)
                     }
-                Toast.makeText(context, "name: " + device, Toast.LENGTH_LONG).show()
 
+                //Toast.makeText(context, "name: " + device, Toast.LENGTH_LONG).show()
 
                 if (getRespo?.isSuccessful == true) {
                     mProgressDialog.dismiss()
-                    Toast.makeText(context, "if", Toast.LENGTH_LONG).show()
-
-
+                    Toast.makeText(context, getString(R.string.successfully_set), Toast.LENGTH_LONG).show()
                 } else {
                     mProgressDialog.dismiss()
-                    Toast.makeText(context, "else", Toast.LENGTH_LONG).show()
+                    //Toast.makeText(context, "else", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, getString(R.string.something_went_wrong), Toast.LENGTH_LONG).show()
 
                 }
             } catch (e: Exception) {
@@ -205,6 +205,41 @@ class DeviceDetailFragment : Fragment() {
         }
     }
 
+    private fun getResponseSpeed(model: Any) {
+        lifecycleScope.launch {
+            mProgressDialog.show()
+
+            try {
+                val getRespo =
+                    device?.let {
+                        detailApi.getPlungeDetailResponse(model as PumpSpeedDetailModal)
+                    }
+
+                //Toast.makeText(context, "name: " + device, Toast.LENGTH_LONG).show()
+
+
+                if (getRespo?.isSuccessful == true) {
+                    mProgressDialog.dismiss()
+                    Toast.makeText(context, getString(R.string.successfully_set), Toast.LENGTH_LONG).show()
+
+
+                } else {
+                    mProgressDialog.dismiss()
+                    Toast.makeText(context, getString(R.string.something_went_wrong), Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+
+                mProgressDialog.hide()
+
+                e.printStackTrace()
+                Toast.makeText(context, getString(R.string.something_went_wrong), Toast.LENGTH_LONG)
+                    .show()
+
+            }
+        }
+    }
+
+
 
     private fun getLightResponse(model: Any) {
         lifecycleScope.launch {
@@ -215,17 +250,18 @@ class DeviceDetailFragment : Fragment() {
                     device?.let {
                         detailApi.getPlungeLightDetailResponse(model as PlungeLightModel)
                     }
-                Toast.makeText(context, "name: " + device, Toast.LENGTH_LONG).show()
+                //Toast.makeText(context, "name: " + device, Toast.LENGTH_LONG).show()
 
 
                 if (getRespo?.isSuccessful == true) {
                     mProgressDialog.dismiss()
-                    Toast.makeText(context, "if", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, getString(R.string.successfully_set), Toast.LENGTH_LONG).show()
 
 
                 } else {
                     mProgressDialog.dismiss()
-                    Toast.makeText(context, "else", Toast.LENGTH_LONG).show()
+                    //Toast.makeText(context, "else", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, getString(R.string.something_went_wrong), Toast.LENGTH_LONG).show()
 
                 }
             } catch (e: Exception) {
@@ -249,17 +285,17 @@ class DeviceDetailFragment : Fragment() {
                     device?.let {
                         detailApi.getPlungeTempDetailResponse(model as TemperartureDetailModel)
                     }
-                Toast.makeText(context, "name: " + device, Toast.LENGTH_LONG).show()
+
+                //Toast.makeText(context, "name: " + device, Toast.LENGTH_LONG).show()
 
 
                 if (getRespo?.isSuccessful == true) {
                     mProgressDialog.dismiss()
-                    Toast.makeText(context, "if", Toast.LENGTH_LONG).show()
-
+                    Toast.makeText(context, getString(R.string.successfully_set), Toast.LENGTH_LONG).show()
 
                 } else {
                     mProgressDialog.dismiss()
-                    Toast.makeText(context, "else", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, getString(R.string.something_went_wrong), Toast.LENGTH_LONG).show()
 
                 }
             } catch (e: Exception) {
@@ -274,25 +310,33 @@ class DeviceDetailFragment : Fragment() {
         }
     }
 
-    private fun plungeLight(state: Int): PlungeLightModel {
+    private fun plungeLight(deviceName: String,state: Int): PlungeLightModel {
 
-        return PlungeLightModel(2, "ABCDEF", PlungeLightModel.Peripherals("light", state), 100)
+        return PlungeLightModel(deviceName,2, "ABCDEF", PlungeLightModel.Peripherals("light", state), 100)
 
     }
 
-    private fun plungePump(deviceName: String, state: Int, value: Int): PumpDetailModal {
+    private fun plungePump(deviceName: String, state: Int): PumpDetailModal {
         return PumpDetailModal(deviceName,
             2,
             "ABCDEF",
-            PumpDetailModal.Peripherals("pump", state, value),
+            PumpDetailModal.Peripherals("pump", state),
             100)
     }
 
-    private fun plungeTemp(value: Int): TemperartureDetailModel {
-
-        return TemperartureDetailModel(2,
+    private fun plungePumpSpeed(deviceName: String, value: Int): PumpSpeedDetailModal {
+        return PumpSpeedDetailModal(deviceName,
+            2,
             "ABCDEF",
-            TemperartureDetailModel.Pehripherals("pump", value),
+            PumpSpeedDetailModal.Peripherals("pump_speed", value),
+            100)
+    }
+
+    private fun plungeTemp(deviceName: String,value: Int): TemperartureDetailModel {
+
+        return TemperartureDetailModel(deviceName,2,
+            "ABCDEF",
+            TemperartureDetailModel.Pehripherals("temp", value),
             100)
 
     }
