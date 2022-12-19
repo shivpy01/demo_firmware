@@ -20,10 +20,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
 
         setContentView(R.layout.activity_main)
-
 
 
     }
@@ -71,7 +70,7 @@ class MainActivity : AppCompatActivity() {
         checkForRequiredPermission()
     }
 
-    private fun checkForRequiredPermission(){
+    private fun checkForRequiredPermission() {
 
         val networkState = (
                 PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
@@ -98,6 +97,11 @@ class MainActivity : AppCompatActivity() {
                 this, Manifest.permission.WRITE_EXTERNAL_STORAGE
             ))
 
+        /*val manageExternalStorage =
+            (PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+                this, Manifest.permission.MANAGE_EXTERNAL_STORAGE
+            ))*/
+
 
         val accessCoarseLocation =
             (PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
@@ -109,44 +113,49 @@ class MainActivity : AppCompatActivity() {
                 this, Manifest.permission.ACCESS_FINE_LOCATION
             ))
 
-        if(networkState && wifiState && changeWifiState
+        if (networkState && wifiState && changeWifiState
             && readIntenalStorage && writeExternalStorage
             && accessCoarseLocation
-            && accessFineLocation){
-
-            navigate(ConnectDeviceFragment())
-
+            && accessFineLocation /*&& manageExternalStorage*/
+        ) {
+            val fragmentCount = supportFragmentManager?.backStackEntryCount
+            if (fragmentCount == 0) {
+                navigate(ConnectDeviceFragment())
+            }
             return
         }
 
-        if(!networkState){
+        if (!networkState) {
             listPermission.add(Manifest.permission.ACCESS_NETWORK_STATE)
         }
-        if(!wifiState){
+        /*if (!manageExternalStorage) {
+            listPermission.add(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
+        }*/
+        if (!wifiState) {
             listPermission.add(Manifest.permission.ACCESS_WIFI_STATE)
         }
-        if(!changeWifiState){
+        if (!changeWifiState) {
             listPermission.add(Manifest.permission.CHANGE_WIFI_STATE)
         }
-        if(!readIntenalStorage){
+        if (!readIntenalStorage) {
             listPermission.add(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
-        if(!writeExternalStorage){
+        if (!writeExternalStorage) {
             listPermission.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
-        if(!accessCoarseLocation){
+        if (!accessCoarseLocation) {
             listPermission.add(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
-        if(!accessFineLocation){
+        if (!accessFineLocation) {
             listPermission.add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(listPermission.toTypedArray() ,101)
-        }else{
+            requestPermissions(listPermission.toTypedArray(), 101)
+        } else {
             ActivityCompat.requestPermissions(
                 this@MainActivity,
-                listPermission.toTypedArray(),101)
+                listPermission.toTypedArray(), 101)
         }
 
     }
@@ -157,7 +166,7 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray,
     ) {
         grantResults.forEachIndexed { index, s ->
-            if(grantResults[index] != PackageManager.PERMISSION_GRANTED){
+            if (grantResults[index] != PackageManager.PERMISSION_GRANTED) {
                 getString(R.string.all_permission_is_required)
                 return
             }

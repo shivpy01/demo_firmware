@@ -19,4 +19,6 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="all_permission_is_required">Please grant all requested permission.</string>
+    <string name="no_internet">No Internet Available</string>
+    <string name="something_went_wrong_while_getting_wifi_list">Oops! Something went wrong, while getting wifi list.</string>
 </resources>
