@@ -1,7 +1,6 @@
 package com.example.firmwaredemoplunge
 
 import android.Manifest
-import android.app.Activity
 import android.content.DialogInterface
 import android.content.DialogInterface.OnClickListener
 import android.content.pm.PackageManager
@@ -13,7 +12,6 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.example.firmwaredemoplunge.fragment.ConnectDeviceFragment
-import java.security.Permission
 
 class MainActivity : AppCompatActivity() {
 
@@ -71,11 +69,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         checkForRequiredPermission()
-
     }
 
     private fun checkForRequiredPermission(){
-
 
         val networkState = (
                 PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
@@ -102,10 +98,6 @@ class MainActivity : AppCompatActivity() {
                 this, Manifest.permission.WRITE_EXTERNAL_STORAGE
             ))
 
-        val manageExternalStorage =
-            (PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this, Manifest.permission.MANAGE_EXTERNAL_STORAGE
-            ))
 
         val accessCoarseLocation =
             (PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
@@ -119,7 +111,7 @@ class MainActivity : AppCompatActivity() {
 
         if(networkState && wifiState && changeWifiState
             && readIntenalStorage && writeExternalStorage
-            && manageExternalStorage && accessCoarseLocation
+            && accessCoarseLocation
             && accessFineLocation){
 
             navigate(ConnectDeviceFragment())
@@ -141,9 +133,6 @@ class MainActivity : AppCompatActivity() {
         }
         if(!writeExternalStorage){
             listPermission.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        }
-        if(!manageExternalStorage){
-            listPermission.add(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
         }
         if(!accessCoarseLocation){
             listPermission.add(Manifest.permission.ACCESS_COARSE_LOCATION)
