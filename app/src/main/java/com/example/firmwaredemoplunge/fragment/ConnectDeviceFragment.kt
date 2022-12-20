@@ -1,14 +1,17 @@
 package com.example.firmwaredemoplunge.fragment
 
 
+import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Context.WIFI_SERVICE
 import android.content.Intent
 import android.content.IntentFilter
+import android.location.LocationManager
 import android.net.ConnectivityManager
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
@@ -18,7 +21,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.widget.*
-import androidx.core.content.ContextCompat.getExternalFilesDirs
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -54,7 +56,7 @@ private const val ARG_PARAM2 = "param2"
 class ConnectDeviceFragment : Fragment() {
 
     private var dialogWifiList: Dialog? = null
-    private var dialogConnectToInternet: Dialog?= null
+    private var dialogConnectToInternet: Dialog? = null
     private var dialogConnectToPlunge: Dialog? = null
     private var prefManager: PrefManager? = null
     private val mProgressDialog: Dialog by lazy { DialogUtil.progressBarLoader(requireContext()) }
@@ -127,6 +129,11 @@ class ConnectDeviceFragment : Fragment() {
 
             view.findViewById<Button>(R.id.bt_RemoveConnectedDevice)
                 .setOnClickListener {
+
+                    isPlungeAlreadyClicked = false
+                    isConnectingWithPlungeAgain = false
+                    deviceName = ""
+
                     prefManager?.clearAllData()
 
                     view.findViewById<TextView>(R.id.tv_ConnectedDeviceName)
@@ -136,8 +143,7 @@ class ConnectDeviceFragment : Fragment() {
 
             view.findViewById<TextView>(R.id.tvNoDeviceConnected).visibility = View.VISIBLE
 
-        }
-        else {
+        } else {
             view.findViewById<TextView>(R.id.tv_ConnectedDeviceName)
                 .visibility = View.GONE
 
@@ -149,9 +155,9 @@ class ConnectDeviceFragment : Fragment() {
 
         getView()?.findViewById<ImageView>(R.id.ivAddDevice)?.setOnClickListener {
             //isPlusButtonAlreadyClicked = true
-            //wifiAction()
-            Log.e("TAG", "createThingApiResponse: 5", )
-            connectToPlungeDialog(false)
+            wifiAction()
+            Log.e("TAG", "createThingApiResponse: 5")
+            //connectToPlungeDialog(false)
         }
 
     }
@@ -160,6 +166,12 @@ class ConnectDeviceFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
+        if(isLocationEnabled(requireContext()) == false){
+
+            startActivity( Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+            return
+        }
+
         val addedDevice = prefManager?.getAddedDevice()
         if (!addedDevice.isNullOrEmpty()) {
 
@@ -167,7 +179,7 @@ class ConnectDeviceFragment : Fragment() {
                 ?.text = addedDevice
 
             view?.findViewById<TextView>(R.id.tv_ConnectedDeviceName)
-            ?.setOnClickListener {
+                ?.setOnClickListener {
                     val bundle = Bundle()
                     bundle.putString("SSID", addedDevice)
                     navigate(DeviceDetailFragment.newInstance(bundle))
@@ -175,6 +187,11 @@ class ConnectDeviceFragment : Fragment() {
 
             view?.findViewById<Button>(R.id.bt_RemoveConnectedDevice)
                 ?.setOnClickListener {
+
+                    isPlungeAlreadyClicked = false
+                    isConnectingWithPlungeAgain = false
+                    deviceName = ""
+
                     prefManager?.clearAllData()
 
                     view?.findViewById<TextView>(R.id.tv_ConnectedDeviceName)
@@ -183,24 +200,22 @@ class ConnectDeviceFragment : Fragment() {
                 }
 
             view?.findViewById<TextView>(R.id.tvNoDeviceConnected)
-                ?.visibility = View.VISIBLE
-
-        }
-        else {
-            view?.findViewById<TextView>(R.id.tv_ConnectedDeviceName)
                 ?.visibility = View.GONE
 
-            view?.findViewById<Button>(R.id.bt_RemoveConnectedDevice)
-                ?.visibility =
-                View.GONE
-            view?.findViewById<TextView>(R.id.tvNoDeviceConnected)
-                ?.visibility = View.GONE
+        } else {
+            view?.findViewById<TextView>(R.id.tv_ConnectedDeviceName)?.visibility = View.GONE
 
-            Log.e("isPlungeAlreadyClicked "+isPlungeAlreadyClicked,"")
+            view?.findViewById<Button>(R.id.bt_RemoveConnectedDevice)?.visibility = View.GONE
+
+            view?.findViewById<TextView>(R.id.tvNoDeviceConnected)?.visibility = View.VISIBLE
+
+            Log.e("isPlungeAlreadyClicked $isPlungeAlreadyClicked", "")
 
             wifiAction()
 
         }
+
+
 
 
         /*if (isPlusButtonAlreadyClicked == true) {
@@ -208,9 +223,20 @@ class ConnectDeviceFragment : Fragment() {
         }*/
 
 
-
     }
 
+    fun isLocationEnabled(context : Context) : Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            // This is a new method provided in API 28
+            val lm : LocationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            return lm.isLocationEnabled
+        } else {
+            // This was deprecated in API 28
+            val mode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE,
+            Settings.Secure.LOCATION_MODE_OFF)
+            return (mode != Settings.Secure.LOCATION_MODE_OFF)
+        }
+    }
 
 
     private fun wifiAction() {
@@ -222,7 +248,7 @@ class ConnectDeviceFragment : Fragment() {
             Log.e("deviceSSID", ssid)
             if (ssid == "<unknown ssid>") {
                 Log.e("in else condition", "djajshdfjsdhfcjk")
-                Log.e("TAG", "createThingApiResponse: 4", )
+                Log.e("TAG", "createThingApiResponse: 4")
                 connectToPlungeDialog(false)
                 return
             }
@@ -243,7 +269,7 @@ class ConnectDeviceFragment : Fragment() {
 
             } else {
                 Log.e("deviceWifixyz", deviceName)
-                Log.e("isPlungeAlreadyClicked "+isPlungeAlreadyClicked,"")
+                Log.e("isPlungeAlreadyClicked " + isPlungeAlreadyClicked, "")
 
                 if (isPlungeAlreadyClicked == true) {
                     if (!deviceName.isNullOrEmpty() && isNetworkAvailable()) {
@@ -254,14 +280,14 @@ class ConnectDeviceFragment : Fragment() {
                             Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    Log.e("TAG", "createThingApiResponse: 3", )
+                    Log.e("TAG", "createThingApiResponse: 3")
                     connectToPlungeDialog(false)
                 }
 
             }
 
         } else {
-            Log.e("TAG", "createThingApiResponse: 2", )
+            Log.e("TAG", "createThingApiResponse: 2")
 
             connectToPlungeDialog(false)
         }
@@ -276,7 +302,7 @@ class ConnectDeviceFragment : Fragment() {
     }
 
     private fun connectToInternet() {
-        if(dialogConnectToInternet != null && dialogConnectToInternet!!.isShowing){
+        if (dialogConnectToInternet != null && dialogConnectToInternet!!.isShowing) {
             dialogConnectToInternet?.dismiss()
         }
         dialogConnectToInternet = Dialog(requireContext())
@@ -300,7 +326,7 @@ class ConnectDeviceFragment : Fragment() {
                 if (result.isSuccessful) {
                     mProgressDialog.dismiss()
 
-                    if(result.code() == 200) {
+                    if (result.code() == 200) {
 
                         try {
                             val response = result.body()
@@ -321,7 +347,8 @@ class ConnectDeviceFragment : Fragment() {
                             var certFilePath: String
 
                             if (success) {
-                                val certFile = "2fbee0846ae15022e0b5d25be29f9563de1b1ac8ca1c7eb0e7aa8ce97c8e25be-certificate.crt"
+                                val certFile =
+                                    "2fbee0846ae15022e0b5d25be29f9563de1b1ac8ca1c7eb0e7aa8ce97c8e25be-certificate.crt"
                                 certFilePath = directory + File.separator.toString() + certFile
                             } else {
                                 Toast.makeText(
@@ -353,21 +380,25 @@ class ConnectDeviceFragment : Fragment() {
                             clientKey.writeText(certificateKey!!)
 
 
-                            Log.e("TAG", "createThingApiResponse: 1", )
+                            Log.e("TAG", "createThingApiResponse: 1")
                             connectToPlungeDialog(true)
 
-                        }catch (e : Exception){
+                        } catch (e: Exception) {
                             isPlungeAlreadyClicked = false
                             e.printStackTrace()
-                            Toast.makeText(requireContext(),getString(R.string.something_went_wrong),Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(),
+                                getString(R.string.something_went_wrong),
+                                Toast.LENGTH_SHORT).show()
 
                         }
 
-                    }else{
+                    } else {
                         isPlungeAlreadyClicked = false
 
                         activity?.runOnUiThread {
-                            Toast.makeText(requireContext(),getString(R.string.something_went_wrong),Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(),
+                                getString(R.string.something_went_wrong),
+                                Toast.LENGTH_SHORT).show()
                         }
                     }
 
@@ -377,15 +408,19 @@ class ConnectDeviceFragment : Fragment() {
                     val message = result.errorBody()
                     Log.e("error message", Gson().toJson(message))
                     Log.e("error message", Gson().toJson(result.message()))
-                    Toast.makeText(requireContext(),getString(R.string.something_went_wrong),Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(),
+                        getString(R.string.something_went_wrong),
+                        Toast.LENGTH_SHORT).show()
                 }
-            }catch (e: Exception){
+            } catch (e: Exception) {
 
                 isPlungeAlreadyClicked = false
 
                 mProgressDialog.dismiss()
                 e.printStackTrace()
-                Toast.makeText(requireContext(),getString(R.string.something_went_wrong),Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(),
+                    getString(R.string.something_went_wrong),
+                    Toast.LENGTH_SHORT).show()
             }
 
         }
@@ -410,7 +445,7 @@ class ConnectDeviceFragment : Fragment() {
 
     private fun connectToPlungeDialog(isShowingDevice: Boolean) {
 
-        if(dialogConnectToPlunge != null && dialogConnectToPlunge!!.isShowing){
+        if (dialogConnectToPlunge != null && dialogConnectToPlunge!!.isShowing) {
             dialogConnectToPlunge?.dismiss()
         }
 
@@ -428,7 +463,8 @@ class ConnectDeviceFragment : Fragment() {
 
         if (!isShowingDevice) {
             dialogConnectToPlunge?.findViewById<Button>(R.id.btnShowDevices)?.visibility = View.GONE
-            dialogConnectToPlunge?.findViewById<TextView>(R.id.tvHeadingNo)?.visibility = View.VISIBLE
+            dialogConnectToPlunge?.findViewById<TextView>(R.id.tvHeadingNo)?.visibility =
+                View.VISIBLE
             dialogConnectToPlunge?.findViewById<TextView>(R.id.tvHeading)?.visibility = View.GONE
         }
 
@@ -463,12 +499,14 @@ class ConnectDeviceFragment : Fragment() {
                         Toast.LENGTH_LONG).show()
                 }
 
-            }catch (e : Exception){
+            } catch (e: Exception) {
 
                 mProgressDialog.dismiss()
 
                 e.printStackTrace()
-                Toast.makeText(requireContext(),getString(R.string.something_went_wrong_while_getting_wifi_list),Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(),
+                    getString(R.string.something_went_wrong_while_getting_wifi_list),
+                    Toast.LENGTH_SHORT).show()
 
             }
         }
@@ -477,7 +515,7 @@ class ConnectDeviceFragment : Fragment() {
 
 
     private fun wifiListDialog(list: ArrayList<WfiNameList.WfiNameListItem>) {
-        if(dialogWifiList != null && dialogWifiList!!.isShowing){
+        if (dialogWifiList != null && dialogWifiList!!.isShowing) {
             dialogWifiList?.dismiss()
         }
         dialogWifiList = Dialog(requireContext())
@@ -569,6 +607,19 @@ class ConnectDeviceFragment : Fragment() {
                     bundle.putString("SSID", deviceName)
                     /*val fragment = DeviceDetailFragment()
                       fragment.arguments = bundle*/
+
+                    if (dialogWifiList != null && dialogWifiList!!.isShowing) {
+                        dialogWifiList?.dismiss()
+                    }
+
+                    if (dialogConnectToInternet != null && dialogConnectToInternet!!.isShowing) {
+                        dialogConnectToInternet?.dismiss()
+                    }
+
+                    if (dialogConnectToPlunge != null && dialogConnectToPlunge!!.isShowing) {
+                        dialogConnectToPlunge?.dismiss()
+                    }
+
                     navigate(DeviceDetailFragment.newInstance(bundle))
 
 
@@ -593,7 +644,7 @@ class ConnectDeviceFragment : Fragment() {
         if (!folder.exists()) {
             success = folder.mkdir()
         }
-        if(success ) {
+        if (success) {
             try {
                 inputStream = File(directory + File.separator.toString() + fileName).inputStream()
             } catch (e: IOException) {
