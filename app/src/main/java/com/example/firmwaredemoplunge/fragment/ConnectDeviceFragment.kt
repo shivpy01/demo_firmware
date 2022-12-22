@@ -1,7 +1,6 @@
 package com.example.firmwaredemoplunge.fragment
 
 
-import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -74,6 +73,10 @@ class ConnectDeviceFragment : Fragment() {
     val routerApi = RetrofitHelper.getInstance("http://192.168.1.1").create(RouterApi::class.java)
     private val createThingApi =
         RetrofitHelper.getInstance("https://zvy5ofzzch.execute-api.us-east-1.amazonaws.com/default/")
+            .create(RouterApi::class.java)
+
+    private val deleteThingApi =
+        RetrofitHelper.getInstance("https://vu0p9laxa5.execute-api.us-east-1.amazonaws.com/default/")
             .create(RouterApi::class.java)
 
     val intentFilter = IntentFilter()
@@ -166,9 +169,9 @@ class ConnectDeviceFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
-        if(isLocationEnabled(requireContext()) == false){
+        if (isLocationEnabled(requireContext()) == false) {
 
-            startActivity( Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+            startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
             return
         }
 
@@ -216,8 +219,6 @@ class ConnectDeviceFragment : Fragment() {
         }
 
 
-
-
         /*if (isPlusButtonAlreadyClicked == true) {
             wifiAction()
         }*/
@@ -225,15 +226,17 @@ class ConnectDeviceFragment : Fragment() {
 
     }
 
-    fun isLocationEnabled(context : Context) : Boolean {
+    fun isLocationEnabled(context: Context): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             // This is a new method provided in API 28
-            val lm : LocationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            val lm: LocationManager =
+                context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             return lm.isLocationEnabled
         } else {
             // This was deprecated in API 28
-            val mode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE,
-            Settings.Secure.LOCATION_MODE_OFF)
+            val mode =
+                Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE,
+                    Settings.Secure.LOCATION_MODE_OFF)
             return (mode != Settings.Secure.LOCATION_MODE_OFF)
         }
     }
@@ -423,6 +426,17 @@ class ConnectDeviceFragment : Fragment() {
                     Toast.LENGTH_SHORT).show()
             }
 
+        }
+    }
+
+    private fun deleteThing(device: String) {
+        lifecycleScope.launch {
+            val result = createThingApi.createThing(device)
+            if (result.isSuccessful) {
+
+            } else {
+
+            }
         }
     }
 

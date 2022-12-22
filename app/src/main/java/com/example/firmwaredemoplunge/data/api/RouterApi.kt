@@ -44,4 +44,9 @@ interface RouterApi {
 
     @GET("/wifi_list")
     suspend fun getWifiList(): Response<WfiNameList>
+
+
+    @GET("delete_thing")
+    suspend fun deleteThing(@Query("delete_thing") deviceName: String): Response<CreateThingResponse>
+
 }
