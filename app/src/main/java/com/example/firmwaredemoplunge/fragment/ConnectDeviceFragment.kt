@@ -571,20 +571,20 @@ class ConnectDeviceFragment : Fragment() {
 
         val fileContent1 = readAssetFile("raw/AmazonRootCA1.pem")
         val fileContent2 =
-            readDownloadStream("/2fbee0846ae15022e0b5d25be29f9563de1b1ac8ca1c7eb0e7aa8ce97c8e25be-certificate.crt")
-        val fileContent3 = readDownloadStream("/private.key")
+            readDownloadStream("/2fbee0846ae15022e0b5d25be29f9563de1b1ac8ca1c7eb0e7aa8ce97c8e25be-certificate.pem.crt")
+        val fileContent3 = readDownloadStream("/private.pem.key")
 
         val outputDir1 = context?.cacheDir // context being the Activity pointer
         val outputFile1 = File.createTempFile("AmazonRootCA1", ".pem", outputDir1)
 
         val outputDir2 = context?.cacheDir // context being the Activity pointer
         val outputFile2 =
-            File.createTempFile("2fbee0846ae15022e0b5d25be29f9563de1b1ac8ca1c7eb0e7aa8ce97c8e25be-certificate",
+            File.createTempFile("2fbee0846ae15022e0b5d25be29f9563de1b1ac8ca1c7eb0e7aa8ce97c8e25be-certificate.pem",
                 ".crt",
                 outputDir2)
 
         val outputDir3 = context?.cacheDir // context being the Activity pointer
-        val outputFile3 = File.createTempFile("private", ".key", outputDir3)
+        val outputFile3 = File.createTempFile("private.pem", ".key", outputDir3)
 
         val part1 = writeBytesToFile(fileContent1!!, outputFile1)
         val part2 = writeBytesToFile(fileContent2!!, outputFile2)

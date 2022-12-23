@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.example.firmwaredemoplunge.fragment.ConnectDeviceFragment
+import com.example.firmwaredemoplunge.fragment.ExtendedConnectDeviceFragment
 
 class MainActivity : AppCompatActivity() {
 
@@ -120,7 +121,7 @@ class MainActivity : AppCompatActivity() {
         ) {
             val fragmentCount = supportFragmentManager?.backStackEntryCount
             if (fragmentCount == 0) {
-                navigate(ConnectDeviceFragment())
+                navigate(ExtendedConnectDeviceFragment())
             }
             return
         }
@@ -172,7 +173,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        navigate(ConnectDeviceFragment())
+        navigate(ExtendedConnectDeviceFragment())
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
     }

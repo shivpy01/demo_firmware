@@ -49,4 +49,10 @@ interface RouterApi {
     @GET("delete_thing")
     suspend fun deleteThing(@Query("delete_thing") deviceName: String): Response<CreateThingResponse>
 
+
+    @POST("/test")
+    suspend fun connectDeviceWithWifi(
+        @Body credential: ConnectDeviceWithWifiReq,
+    ): Response<CommonResponse>
+
 }

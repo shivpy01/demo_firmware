@@ -32,15 +32,42 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+
+    <CheckBox
+        android:id="@+id/cbCheckMobile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:text="Mobile Data"
+        android:enabled="false"
+        android:checked="true"
+        android:textColor="@color/black"
+        app:layout_constraintEnd_toEndOf="@id/tvHeading"
+        app:layout_constraintStart_toStartOf="@id/tvHeading"
+        app:layout_constraintTop_toBottomOf="@id/tvHeading" />
+
+    <CheckBox
+        android:id="@+id/cbCheckLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:text="Location"
+        android:checked="true"
+        android:enabled="false"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="@id/cbCheckMobile"
+        app:layout_constraintTop_toBottomOf="@id/cbCheckMobile" />
+
+
     <Button
         android:id="@+id/btnOk"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="80dp"
+        android:layout_marginTop="20dp"
         android:text="ok"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvHeading" />
+        app:layout_constraintTop_toBottomOf="@id/cbCheckLocation" />
 
 
     <Button
