@@ -10,8 +10,7 @@ import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.net.ConnectivityManager
 import android.net.wifi.WifiManager
-import android.os.Build
-import android.os.Bundle
+import android.os.*
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.util.Log
@@ -29,19 +28,32 @@ import com.example.firmwaredemoplunge.R
 import com.example.firmwaredemoplunge.data.adapter.WifiListAdapter
 import com.example.firmwaredemoplunge.data.api.RetrofitHelper
 import com.example.firmwaredemoplunge.data.api.RouterApi
+import com.example.firmwaredemoplunge.data.model.CommonResponse
 import com.example.firmwaredemoplunge.data.model.ConnectDeviceWithWifiReq
 import com.example.firmwaredemoplunge.data.model.WfiNameList
 import com.example.firmwaredemoplunge.data.util.DialogUtil
 import com.example.firmwaredemoplunge.data.util.LocationService
 import com.example.firmwaredemoplunge.data.util.MobileDataService
 import com.example.firmwaredemoplunge.data.util.PrefManager
+import com.google.gson.Gson
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
 
 class ExtendedConnectDeviceFragment : Fragment() {
 
+    private var isDeviceRegistered: Boolean?=null
+    private var dialogConnectToInternet: Dialog? = null
     private var mobileData: Boolean? = null
     private var wifiManager: WifiManager? = null
     private var locationGps: Boolean? = null
+    private val mqttAddress = "a1k3wmadt0ja18-ats.iot.us-east-1.amazonaws.com"
 
 
     var readPhoneState: Boolean? = null
@@ -58,6 +70,12 @@ class ExtendedConnectDeviceFragment : Fragment() {
 
 
     private var deviceName = ""
+
+    private var staticIp = false
+
+    private val connectApiRouter =
+        RetrofitHelper.getInstance("http://10.11.4.64").create(RouterApi::class.java)
+
 
     private val routerApi =
         RetrofitHelper.getInstance("http://192.168.1.1").create(RouterApi::class.java)
@@ -210,6 +228,14 @@ class ExtendedConnectDeviceFragment : Fragment() {
                 Toast.LENGTH_LONG).show()
         }
         return isenabled
+    }
+
+
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager =
+            requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager?
+        val activeNetworkInfo = connectivityManager?.activeNetworkInfo
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected
     }
 
     private fun wifiAction() {
@@ -385,13 +411,6 @@ class ExtendedConnectDeviceFragment : Fragment() {
     }
 
 
-    override fun onResume() {
-        super.onResume()
-
-
-    }
-
-
     private fun request(ssid: String, password: String) {
 
         val connectWithWifiReq = ConnectDeviceWithWifiReq().apply {
@@ -406,20 +425,16 @@ class ExtendedConnectDeviceFragment : Fragment() {
                 if (result.isSuccessful) {
 
                     val prefManager = PrefManager(requireContext())
-                    prefManager.saveAddedDevice(deviceName)
+//                    prefManager.saveAddedDevice(deviceName)
 
                     val bundle = Bundle()
                     bundle.putString("SSID", deviceName)
-                    /*val fragment = DeviceDetailFragment()
-                      fragment.arguments = bundle*/
 
                     if (dialogWifiList != null && dialogWifiList!!.isShowing) {
                         dialogWifiList?.dismiss()
                     }
 
-
-                    navigate(DeviceDetailFragment.newInstance(bundle))
-
+                    switchNetwork()
 
                 } else {
                     Toast.makeText(requireContext(), result.message(), Toast.LENGTH_LONG).show()
@@ -430,6 +445,303 @@ class ExtendedConnectDeviceFragment : Fragment() {
         }
     }
 
+    private fun switchNetwork() {
+        if (isNetworkAvailable()) {
+            if (dialogConnectToInternet != null && dialogConnectToInternet!!.isShowing) {
+                dialogConnectToInternet?.dismiss()
+            }
+            createThingApiResponse(deviceName)
+        } else {
+            connectToInternet()
+        }
+
+    }
+
+    private fun connectToInternet() {
+        if (dialogConnectToInternet != null && dialogConnectToInternet!!.isShowing) {
+            dialogConnectToInternet?.dismiss()
+        }
+        dialogConnectToInternet = Dialog(requireContext())
+        dialogConnectToInternet?.setCancelable(false)
+        dialogConnectToInternet?.setContentView(R.layout.connect_to_internet_dialog)
+        dialogConnectToInternet?.findViewById<Button>(R.id.btnOk)?.setOnClickListener {
+            if (!isNetworkAvailable()) {
+                startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
+            } else {
+                switchNetwork()
+            }
+        }
+        dialogConnectToInternet?.show()
+        val window: Window? = dialogConnectToInternet?.window
+        window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+    }
+
+
+    private fun createThingApiResponse(device: String) {
+        lifecycleScope.launch {
+            mProgressDialog.show()
+            try {
+                val result = createThingApi.createThing(device)
+                if (result.isSuccessful) {
+                    mProgressDialog.dismiss()
+
+                    if (result.code() == 200) {
+
+                        try {
+                            val response = result.body()
+
+                            val certificatePem = response?.certificatePem
+                            val certificateKey = response?.privateKey
+
+                            val directory: String =
+                                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).path +
+                                        File.separator.toString() + "Plunge File"
+
+                            var folder = File(directory)
+                            var success = true
+                            if (!folder.exists()) {
+                                success = folder.mkdir()
+                            }
+
+                            var certFilePath: String
+
+                            if (success) {
+                                val certFile =
+                                    "2fbee0846ae15022e0b5d25be29f9563de1b1ac8ca1c7eb0e7aa8ce97c8e25be-certificate.crt"
+                                certFilePath = directory + File.separator.toString() + certFile
+                            } else {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed to create  directory",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                return@launch
+                            }
+
+                            val clientCert = File(certFilePath)
+                            clientCert.writeText(certificatePem!!)
+
+                            var privateFilePath: String
+
+                            if (success) {
+                                val certFile = "private.key"
+                                privateFilePath = directory + File.separator.toString() + certFile
+                            } else {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed to create  directory",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                return@launch
+                            }
+
+                            val clientKey = File(privateFilePath)
+                            clientKey.writeText(certificateKey!!)
+
+
+                            Log.e("TAG", "createThingApiResponse: 1")
+
+                            if (!isNetworkAvailable() && deviceName.contains("Cold_Plunge_") && wifiManager!!.isWifiEnabled) {
+                                staticConnectApi()
+                            } else {
+                                isDeviceRegistered=true
+                                isAgainPlunge(isDeviceRegistered!!)
+                               /* connectToPlungeDialog(true,
+                                    locationGps!!,
+                                    dataState!!.isDataConnected)*/
+                            }
+
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            Toast.makeText(requireContext(),
+                                getString(R.string.something_went_wrong),
+                                Toast.LENGTH_SHORT).show()
+
+                        }
+
+                    } else {
+                        activity?.runOnUiThread {
+                            Toast.makeText(requireContext(),
+                                getString(R.string.something_went_wrong),
+                                Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                } else {
+                    mProgressDialog.dismiss()
+                    val message = result.errorBody()
+                    Log.e("error message", Gson().toJson(message))
+                    Log.e("error message", Gson().toJson(result.message()))
+                    Toast.makeText(requireContext(),
+                        getString(R.string.something_went_wrong),
+                        Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                mProgressDialog.dismiss()
+                e.printStackTrace()
+                Toast.makeText(requireContext(),
+                    getString(R.string.something_went_wrong),
+                    Toast.LENGTH_SHORT).show()
+            }
+
+        }
+    }
+
+    private fun isAgainPlunge(isAgain:Boolean){
+        if(isAgain){
+            connectToPlungeDialog(true,
+                locationGps!!,
+                dataState!!.isDataConnected)
+        }else{
+
+        }
+    }
+
+
+    private fun readDownloadStream(fileName: String): InputStream? {
+        var inputStream: InputStream? = null
+
+        val directory: String =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).path +
+                    File.separator.toString() + "Plunge File"
+
+        var folder = File(directory)
+        var success = true
+        if (!folder.exists()) {
+            success = folder.mkdir()
+        }
+        if (success) {
+            try {
+                inputStream = File(directory + File.separator.toString() + fileName).inputStream()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+        return inputStream
+    }
+
+    private fun readAssetFile(fileName: String): InputStream? {
+        val assetManager = context?.assets
+        var inputStream: InputStream? = null
+        try {
+            inputStream = assetManager?.open(fileName)
+            return inputStream
+        } catch (e: IOException) {
+            Log.e("message: ", e.message!!)
+            return inputStream
+        }
+    }
+
+
+    @Throws(IOException::class)
+    fun writeBytesToFile(`is`: InputStream, file: File?): MultipartBody.Part? {
+
+        var fos: FileOutputStream? = null
+        try {
+            val data = ByteArray(2048)
+            var nbread = 0
+            fos = FileOutputStream(file)
+            while (`is`.read(data).also { nbread = it } > -1) {
+                fos.write(data, 0, nbread)
+            }
+
+            return MultipartBody.Part.createFormData("file",
+                file?.name,
+                file!!.asRequestBody("image/*".toMediaTypeOrNull()))
+
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            return null
+        } finally {
+            if (fos != null) {
+                fos.close()
+            }
+        }
+    }
+
+
+    private fun staticConnectApi() {
+        try {
+            lifecycleScope.launch {
+                mProgressDialog.show()
+                val result = connectApiRouter.getConnectedToIP()
+                if (result.isSuccessful) {
+                    mProgressDialog.show()
+                    staticIp = true
+
+                    registerDevice(deviceName, mqttAddress)
+                    Log.e("Success", "jhjdshj")
+                } else {
+                    mProgressDialog.show()
+                    staticIp = false
+                    Log.e("Failure", "jhjdshj")
+
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        staticConnectApi()
+                    }, 50000)
+                }
+            }
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Failed to Connect", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+    private fun registerDevice(/*ssid:String,pass:String,*/device: String, mqtt: String) {
+        val fileContent1 = readAssetFile("raw/AmazonRootCA1.pem")
+        val fileContent2 =
+            readDownloadStream("/2fbee0846ae15022e0b5d25be29f9563de1b1ac8ca1c7eb0e7aa8ce97c8e25be-certificate.crt")
+        val fileContent3 = readDownloadStream("/private.key")
+
+        val outputDir1 = context?.cacheDir // context being the Activity pointer
+        val outputFile1 = File.createTempFile("AmazonRootCA1", ".pem", outputDir1)
+
+        val outputDir2 = context?.cacheDir // context being the Activity pointer
+        val outputFile2 =
+            File.createTempFile("2fbee0846ae15022e0b5d25be29f9563de1b1ac8ca1c7eb0e7aa8ce97c8e25be-certificate",
+                ".crt",
+                outputDir2)
+
+        val outputDir3 = context?.cacheDir // context being the Activity pointer
+        val outputFile3 = File.createTempFile("private", ".key", outputDir3)
+
+        val part1 = writeBytesToFile(fileContent1!!, outputFile1)
+        val part2 = writeBytesToFile(fileContent2!!, outputFile2)
+        val part3 = writeBytesToFile(fileContent3!!, outputFile3)
+
+        val requestBody: RequestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            /*.addFormDataPart("wifi_ssid", ssid)
+            .addFormDataPart("wifi_pass", pass)*/
+            .addFormDataPart("device_id", device)
+            .addFormDataPart("mqtt_addr", mqtt)
+            .addFormDataPart("root_cert", outputFile1.name.toString(),
+                MultipartBody.Builder().addPart(part1!!).build())
+            .addFormDataPart("client_cert", outputFile2.name.toString(),
+                MultipartBody.Builder().addPart(part2!!).build())
+            .addFormDataPart("cert_key", outputFile3.name.toString(),
+                MultipartBody.Builder().addPart(part3!!).build())
+            .build()
+
+        Log.d("requestBody", Gson().toJson(requestBody))
+        mProgressDialog.show()
+        lifecycleScope.launch {
+            val result = connectApiRouter.getConnectedToIPStaticRes(requestBody)
+            val data = result.body() as CommonResponse
+            if (result.isSuccessful) {
+                mProgressDialog.dismiss()
+                var bundle = Bundle()
+                bundle.putString("SSID", deviceName)
+                navigate(DeviceDetailFragment.newInstance(bundle))
+
+            } else {
+                mProgressDialog.dismiss()
+                Toast.makeText(requireContext(), "${data.msg}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+
     private fun navigate(frm: Fragment) {
         activity?.supportFragmentManager
             ?.beginTransaction()
@@ -439,15 +751,7 @@ class ExtendedConnectDeviceFragment : Fragment() {
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment ExtendedConnectDeviceFragment.
-         */
-        // TODO: Rename and change types and number of parameters
+
         @JvmStatic
         fun newInstance(param1: String, param2: String) =
             ExtendedConnectDeviceFragment().apply {

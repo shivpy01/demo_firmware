@@ -4,10 +4,8 @@ import com.example.firmwaredemoplunge.data.model.*
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
-import retrofit2.http.Field
 import retrofit2.http.GET
 import retrofit2.http.POST
-import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface RouterApi {
@@ -55,4 +53,9 @@ interface RouterApi {
         @Body credential: ConnectDeviceWithWifiReq,
     ): Response<CommonResponse>
 
+    @GET("/")
+    suspend fun getConnectedToIP(): Response<CommonResponse>
+
+    @GET("/aws")
+    suspend fun getConnectedToIPStaticRes(@Body credential: RequestBody): Response<CommonResponse>
 }
